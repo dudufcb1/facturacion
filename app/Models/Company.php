@@ -29,11 +29,18 @@ class Company extends Model
   ];
 
   // Método para incrementar el número de factura
-  public function getNextInvoiceNumber()
+
+  public function updateNextInvoiceNumber()
   {
-    $this->last_invoice_number++;
+    $this->last_invoice_number++; // Corrección: Faltaba el operador de incremento
     $this->save();
     return $this->last_invoice_number;
+  }
+
+  // Método para asignarle un numero a la factura
+  public function assignNextInvoiceNumber()
+  {
+    return $this->last_invoice_number + 1;
   }
 
   // Método para formatear los teléfonos

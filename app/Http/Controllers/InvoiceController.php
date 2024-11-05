@@ -2,36 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use Livewire\Livewire;
 use App\Models\Company;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-  public function create()
+  public function index()
   {
-    // Get the default company
-    $defaultCompany = Company::where('default', true)->first();
-    // Get all companies for the dropdown
-    $companies = Company::all();
+    $invoices = Invoice::with(['client', 'company'])
+      ->orderBy('created_at', 'desc')
+      ->paginate(10);
 
-    return view('invoices.create', compact('defaultCompany', 'companies'));
+    return view('invoices.index', compact('invoices'));
   }
 
-  public function store(Request $request)
+  public function create()
   {
-    // Validate the request
-    $request->validate([
-      'company_id' => 'required|exists:companies,id',
-      // Other validation rules...
-    ]);
-
-    // Create the invoice with the selected company
-    // $invoice = new Invoice();
-    // $invoice->company_id = $request->input('company_id');
-    // // Set other invoice fields...
-    // $invoice->save();
-
-    return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
+    // Método 2: Renderizar directamente el componente
+    return view('invoices.create');
   }
 }

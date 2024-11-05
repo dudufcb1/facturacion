@@ -1,19 +1,17 @@
-@extends('layouts.app')
+<x-app-layout>
+  <x-slot name="header">
+    <h2 class="text-xl font-semibold leading-tight text-gray-800">
+      {{ __('Crear Compañia') }}
+    </h2>
+  </x-slot>
 
-@section('content')
-  <form action="{{ route('invoices.store') }}" method="POST">
-    @csrf
-    <div class="form-group">
-      <label for="company_id">Company</label>
-      <select name="company_id" id="company_id" class="form-control">
-        @foreach ($companies as $company)
-          <option value="{{ $company->id }}" {{ $company->id == $defaultCompany->id ? 'selected' : '' }}>
-            {{ $company->name }}
-          </option>
-        @endforeach
-      </select>
+  <div class="py-12">
+    <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+
+        @livewire('create-invoice');
+
+      </div>
     </div>
-    <!-- Other form fields... -->
-    <button type="submit" class="btn btn-primary">Create Invoice</button>
-  </form>
-@endsection
+  </div>
+</x-app-layout>
