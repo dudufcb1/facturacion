@@ -32,7 +32,8 @@ Route::resource('clients', ClientController::class);
 
 
 
-
+/* Helpers para recursos de impresión */
 Route::get('/products/{product}/qr', [ProductController::class, 'generateQR'])->name('products.qr');
+Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'generatePDF'])->name('invoices.pdf');
 
 require __DIR__ . '/auth.php';
