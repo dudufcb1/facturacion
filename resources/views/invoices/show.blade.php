@@ -40,7 +40,7 @@
         {{-- Información de la Proforma --}}
         <div class="w-full text-right md:w-1/3">
           <div class="rounded-lg bg-gray-100 p-4">
-            <h2 class="text-xl font-bold text-gray-800">PROFORMA</h2>
+            <h2 class="text-xl font-bold text-gray-800">FACTURA</h2>
             <p class="text-2xl font-bold text-blue-600">
               N° {{ str_pad($invoice->invoice_number, 4, '0', STR_PAD_LEFT) }}
             </p>
@@ -102,21 +102,53 @@
         <div class="rounded-lg bg-gray-50 p-4">
           <div class="flex items-center justify-between">
             <span class="text-gray-600">Subtotal:</span>
-            <span class="font-semibold">C$ {{ number_format($invoice->subtotal, 2) }}</span>
+            <span class="font-semibold">{{ $invoice->currency === 'USD' ? '$' : 'C$' }}
+              {{ number_format($invoice->subtotal, 2) }}</span>
           </div>
           @if ($invoice->tax > 0)
             <div class="mt-2 flex items-center justify-between">
               <span class="text-gray-600">IVA:</span>
-              <span class="font-semibold">C$ {{ number_format($invoice->tax, 2) }}</span>
+              <span class="font-semibold">{{ $invoice->currency === 'USD' ? '$' : 'C$' }}
+                {{ number_format($invoice->tax, 2) }}</span>
             </div>
           @endif
           <div class="mt-2 flex items-center justify-between border-t pt-2">
             <span class="text-lg font-bold">Total:</span>
-            <span class="text-lg font-bold text-blue-600">C$ {{ number_format($invoice->total, 2) }}</span>
+            <span class="text-lg font-bold text-blue-600">{{ $invoice->currency === 'USD' ? '$' : 'C$' }}
+              {{ number_format($invoice->total, 2) }}</span>
           </div>
         </div>
       </div>
     </div>
+
+    {{-- Pagos Realizados --}}
+    @if ($invoice->payments->count() > 0)
+      <div class="mt-6">
+        <h3 class="mb-3 text-lg font-semibold text-gray-700">Pagos Realizados</h3>
+        <div class="space-y-2">
+          @foreach ($invoice->payments as $payment)
+            <a href="{{ route('payments.show', $payment) }}"
+              class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 transition-colors hover:bg-gray-50">
+              <div class="flex items-center gap-3">
+                <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p class="font-medium">Recibo #{{ str_pad($payment->id, 4, '0', STR_PAD_LEFT) }}</p>
+                  <p class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($payment->payment_date)->format('d/m/Y') }}
+                  </p>
+                </div>
+              </div>
+              <span class="font-semibold">
+                {{ $payment->payment_currency === 'USD' ? '$' : 'C$' }}
+                {{ number_format($payment->amount_paid, 2) }}
+              </span>
+            </a>
+          @endforeach
+        </div>
+      </div>
+    @endif
 
     {{-- Notas y Firmas --}}
     <div class="mt-8">
@@ -127,11 +159,13 @@
         <div class="text-center">
           <div class="border-t border-gray-300 pt-2">
             <p class="text-sm text-gray-600">Elaborado Por</p>
+            <p class="mt-1 font-semibold">{{ auth()->user()->name }}</p>
           </div>
         </div>
         <div class="text-center">
           <div class="border-t border-gray-300 pt-2">
             <p class="text-sm text-gray-600">Cliente</p>
+            <p class="mt-1 font-semibold">{{ $invoice->client->name }}</p>
           </div>
         </div>
       </div>

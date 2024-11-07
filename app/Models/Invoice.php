@@ -89,7 +89,9 @@ class Invoice extends Model
   {
     $startOfWeek = Carbon::now()->startOfWeek();
     $endOfWeek = Carbon::now()->endOfWeek();
-    return $query->whereBetween('due_date', [$startOfWeek, $endOfWeek]);
+
+    return $query->whereBetween('due_date', [$startOfWeek, $endOfWeek])
+      ->where('status', '!=', 'paid');
   }
 
   // En el modelo Invoice
@@ -119,5 +121,9 @@ class Invoice extends Model
       return 'partial';
     }
     return 'unpaid';
+  }
+  public function payments()
+  {
+    return $this->hasMany(Payment::class);
   }
 }

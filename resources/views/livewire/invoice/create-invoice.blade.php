@@ -45,21 +45,32 @@
   </div>
 
   <!-- Moneda y Tipo de Cambio -->
-  <div class="mb-6 grid grid-cols-2 gap-4">
+  <div class="mb-6 grid grid-cols-2 gap-4"
+    x-data="{ selectedCurrency: @entangle('selected_currency').live }">
     <div>
       <x-input-label for="selected_currency" value="Moneda de Facturación" />
-      <select wire:model.live="selected_currency" class="w-full rounded-md border-gray-300">
+      <select wire:model.live="selected_currency"
+        x-model="selectedCurrency"
+        class="w-full rounded-md border-gray-300">
         <option value="NIO">Córdobas (NIO)</option>
         <option value="USD">Dólares (USD)</option>
       </select>
     </div>
     <div>
       <x-input-label for="exchange_rate" value="Tipo de Cambio (1 USD = X NIO)" />
+      @if ($selected_currency === 'NIO' && !$exchange_rate)
+        <p class="text-red-500">El tipo de cambio es obligatorio cuando la moneda es Córdobas.</p>
+      @endif
       <x-text-input
         wire:model.live="exchange_rate"
         type="number"
         step="0.01"
         class="w-full"
+        x-bind:disabled="selectedCurrency === 'USD'"
+        x-bind:class="{
+            'opacity-50 bg-gray-100 cursor-not-allowed': selectedCurrency === 'USD',
+            'bg-white': selectedCurrency !== 'USD'
+        }"
         required />
     </div>
   </div>
@@ -71,7 +82,13 @@
       wire:model.live="product_search"
       type="text"
       class="w-full"
-      placeholder="Buscar por nombre o código" />
+      placeholder="Buscar por nombre o código"
+      x-bind:disabled="selectedCurrency === 'NIO' && !exchange_rate"
+      x-bind:class="{
+          'opacity-50 bg-gray-100 cursor-not-allowed': selectedCurrency === 'NIO' && !exchange_rate,
+          'bg-white': !(selectedCurrency === 'NIO' && !exchange_rate)
+      }" />
+
     @if ($product_search)
       <div class="mt-2 rounded-lg bg-white shadow">
         @foreach ($products ?? [] as $product)

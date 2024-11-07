@@ -15,10 +15,8 @@ class Payment extends Model
     'USD' => 'Dólares',
     'NIO' => 'Córdobas'
   ];
-
-  const CURRENCY_SYMBOLS = [
-    'USD' => '$',
-    'NIO' => 'C$'
+  protected $casts = [
+    'payment_date' => 'datetime',
   ];
 
   // Enum para PaymentMethod
@@ -30,6 +28,15 @@ class Payment extends Model
     'debit_card' => 'Tarjeta de Débito',
     'other' => 'Otro'
   ];
+
+  // Agregar esta nueva constante
+  const STATUS_TRANSLATIONS = [
+    'pending' => 'Pendiente',
+    'completed' => 'Completado',
+    'cancelled' => 'Cancelado',
+    'rejected' => 'Rechazado'
+  ];
+
 
   protected $fillable = [
     'invoice_id',
@@ -47,13 +54,6 @@ class Payment extends Model
     'payment_date',
     'bank_name',
     'bank_account'
-  ];
-
-  protected $casts = [
-    'amount_paid' => 'decimal:2',
-    'exchange_rate' => 'decimal:4',
-    'converted_amount' => 'decimal:2',
-    'payment_date' => 'datetime',
   ];
 
   protected static function boot()
@@ -83,19 +83,11 @@ class Payment extends Model
       }
     });
 
+
+
     static::created(function ($payment) {
       $payment->checkInvoicePaymentStatus();
     });
-  }
-
-  public function invoice()
-  {
-    return $this->belongsTo(Invoice::class);
-  }
-
-  public function user()
-  {
-    return $this->belongsTo(User::class);
   }
 
   public function checkInvoicePaymentStatus()
@@ -111,56 +103,14 @@ class Payment extends Model
       $this->save();
     }
   }
-
-  public function getFormattedAmountPaidAttribute()
+  public function invoice()
   {
-    return self::CURRENCY_SYMBOLS[$this->payment_currency] . ' ' . number_format($this->amount_paid, 2);
+    return $this->belongsTo(Invoice::class);
   }
 
-  public function getFormattedConvertedAmountAttribute()
+  // Agregar este método
+  public function getStatusSpanishAttribute()
   {
-    return self::CURRENCY_SYMBOLS[$this->invoice_currency] . ' ' . number_format($this->converted_amount, 2);
-  }
-
-  public function getConversionDetailsAttribute()
-  {
-    if ($this->payment_currency === $this->invoice_currency) {
-      return 'Sin conversión necesaria';
-    }
-
-    return sprintf(
-      '%s %s = %s %s (TC: %s)',
-      self::CURRENCY_SYMBOLS[$this->payment_currency],
-      number_format($this->amount_paid, 2),
-      self::CURRENCY_SYMBOLS[$this->invoice_currency],
-      number_format($this->converted_amount, 2),
-      number_format($this->exchange_rate, 4)
-    );
-  }
-
-  // Scopes
-  public function scopeDateBetween($query, $from, $to)
-  {
-    return $query->whereBetween('payment_date', [$from, $to]);
-  }
-
-  public function scopeByPaymentMethod($query, $method)
-  {
-    return $query->where('payment_method', $method);
-  }
-
-  public function scopeByStatus($query, $status)
-  {
-    return $query->where('status', $status);
-  }
-
-  public function scopeByCurrency($query, $currency)
-  {
-    return $query->where('payment_currency', $currency);
-  }
-
-  public function scopeByInvoice($query, $invoiceId)
-  {
-    return $query->where('invoice_id', $invoiceId);
+    return self::STATUS_TRANSLATIONS[$this->status] ?? $this->status;
   }
 }

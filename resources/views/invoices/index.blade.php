@@ -98,6 +98,7 @@
         @php
           $dueThisWeek = App\Models\Invoice::dueThisWeek()
               ->with(['client', 'company'])
+              ->where('status', '!=', 'paid')
               ->get();
         @endphp
         @if ($dueThisWeek->count())
@@ -127,6 +128,14 @@
                   </td>
                   <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
                     {{ number_format($invoice->total, 2) }}
+                  </td>
+                  <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                    @if ($invoice->payment_status !== 'paid')
+                      <a href="{{ route('payments.create', ['invoice' => $invoice->id]) }}"
+                        class="text-indigo-600 hover:text-indigo-900">
+                        Registrar Pago
+                      </a>
+                    @endif
                   </td>
                   <td class="whitespace-nowrap px-6 py-4 text-sm font-medium">
                     <div class="flex space-x-2">
@@ -212,7 +221,8 @@
                   @else
                     <span
                       class="inline-flex rounded-full bg-purple-100 px-2 text-xs font-semibold leading-5 text-purple-800">Crédito
-                      ({{ $invoice->credit_days }} días)</span>
+                      ({{ $invoice->credit_days }} días)
+                    </span>
                   @endif
                 </td>
                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
@@ -226,8 +236,15 @@
                   {{ number_format($invoice->total, 2) }}
                   <div class="text-xs text-gray-500">
                     Sub: {{ number_format($invoice->subtotal, 2) }}
-                    <br>
-                    IVA: {{ number_format($invoice->tax, 2) }}
+                    @if ($invoice->remaining_balance > 0)
+                      <br>
+                      <span class="font-semibold text-red-600">
+                        Deuda: {{ number_format($invoice->remaining_balance, 2) }}
+                      </span>
+                    @else
+                      <br>
+                      <span class="font-semibold text-green-600">Pagada</span>
+                    @endif
                   </div>
                 </td>
                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
@@ -240,15 +257,23 @@
                   <div class="flex justify-end gap-2">
                     <a href="{{ route('invoices.show', $invoice) }}"
                       class="text-blue-600 hover:text-blue-900">Ver</a>
-                    <a href="{{ route('invoices.edit', $invoice) }}"
-                      class="text-indigo-600 hover:text-indigo-900">Editar</a>
+                    {{-- <a href="{{ route('invoices.edit', $invoice) }}"
+                      class="text-indigo-600 hover:text-indigo-900">Editar</a> --}}
                     <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline"
                       onsubmit="return confirm('¿Estás seguro de querer eliminar esta factura?')">
                       @csrf
                       @method('DELETE')
                       <button type="submit" class="text-red-600 hover:text-red-900">Eliminar</button>
                     </form>
+                    @if ($invoice->payment_status !== 'paid')
+                      <a href="{{ route('payments.create', ['invoice' => $invoice->id]) }}"
+                        class="text-indigo-600 hover:text-indigo-900">
+                        $ Pagos
+                      </a>
+                    @endif
                   </div>
+
+
                 </td>
               </tr>
             @empty
