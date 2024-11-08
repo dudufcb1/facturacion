@@ -1,13 +1,6 @@
 <x-app-layout>
   <x-slot name="header">
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold leading-tight text-gray-800">
-        {{ __('Clientes') }}
-      </h2>
-      <a href="{{ route('clients.create') }}" class="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
-        {{ __('Nuevo Cliente') }}
-      </a>
-    </div>
+    <x-menu-component title="Cliente" routeIndex="clients.index" routeCreate="clients.create" />
   </x-slot>
 
   <div class="py-12">
