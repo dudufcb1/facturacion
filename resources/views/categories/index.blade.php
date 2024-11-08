@@ -1,14 +1,6 @@
 <x-app-layout>
   <x-slot name="header">
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold leading-tight text-gray-800">
-        {{ __('Categorías') }}
-      </h2>
-      <a href="{{ route('categories.create') }}"
-        class="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
-        {{ __('Nueva Categoría') }}
-      </a>
-    </div>
+    <x-menu-component title="Categoría" routeIndex="categories.index" routeCreate="categories.create" />
   </x-slot>
 
   <div class="py-12">
@@ -72,8 +64,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="ml-2 text-red-600 hover:text-red-900"
-                      onclick="return confirm('¿Está seguro que desea eliminar esta categoría?')">
-                      Eliminar
+                      onclick="return confirm('¿Está seguro que desea eliminar esta categoría?')">Eliminar
                     </button>
                   </form>
                 </td>

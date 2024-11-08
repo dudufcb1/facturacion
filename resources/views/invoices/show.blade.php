@@ -1,5 +1,8 @@
 {{-- resources/views/invoices/show.blade.php --}}
 <x-app-layout>
+  <x-slot name="header">
+    <x-menu-component title="Factura" routeIndex="invoices.index" routeCreate="invoices.create" />
+  </x-slot>
   <div class="mx-auto my-8 max-w-4xl rounded-lg bg-white p-4 shadow-lg">
     {{-- Encabezado --}}
     <div class="border-b pb-6">

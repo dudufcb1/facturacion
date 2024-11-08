@@ -1,20 +1,6 @@
 <x-app-layout>
   <x-slot name="header">
-    <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold leading-tight text-gray-800">
-        {{ __('Editar Producto') }}
-      </h2>
-      {{-- Botón para eliminar producto --}}
-      <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline"
-        onsubmit="return confirm('¿Está seguro de que desea eliminar este producto?');">
-        @csrf
-        @method('DELETE')
-        <button type="submit"
-          class="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-          {{ __('Eliminar Producto') }}
-        </button>
-      </form>
-    </div>
+    <x-menu-component title="Producto" routeIndex="products.index" routeCreate="products.create" />
   </x-slot>
 
   <div class="py-12">

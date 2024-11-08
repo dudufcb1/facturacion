@@ -1,8 +1,6 @@
 <x-app-layout>
   <x-slot name="header">
-    <h2 class="text-xl font-semibold leading-tight text-gray-800">
-      {{ __('Editar Categoría') }}
-    </h2>
+    <x-menu-component title="Categoría" routeIndex="categories.index" routeCreate="categories.create" />
   </x-slot>
 
   <div class="py-12">
