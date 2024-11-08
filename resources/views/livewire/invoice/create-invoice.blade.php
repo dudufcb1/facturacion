@@ -4,16 +4,12 @@
   <!-- Cliente -->
   <div class="mb-6">
     <x-input-label for="client_search" value="Buscar Cliente" />
-    <x-text-input
-      wire:model.live="client_search"
-      type="text"
-      class="w-full"
+    <x-text-input wire:model.live="client_search" type="text" class="w-full"
       placeholder="Buscar por nombre o número de documento" />
     @if ($client_search && !$selected_client)
       <div class="mt-2 rounded-lg bg-white shadow">
         @foreach ($clients ?? [] as $client)
-          <div class="cursor-pointer p-2 hover:bg-gray-100"
-            wire:click="selectClient({{ $client->id }})">
+          <div class="cursor-pointer p-2 hover:bg-gray-100" wire:click="selectClient({{ $client->id }})">
             {{ $client->name }} - {{ $client->document_number }}
           </div>
         @endforeach
@@ -45,62 +41,50 @@
   </div>
 
   <!-- Moneda y Tipo de Cambio -->
-  <div class="mb-6 grid grid-cols-2 gap-4"
-    x-data="{ selectedCurrency: @entangle('selected_currency').live }">
+  <div class="mb-6 grid grid-cols-2 gap-4">
     <div>
       <x-input-label for="selected_currency" value="Moneda de Facturación" />
-      <select wire:model.live="selected_currency"
-        x-model="selectedCurrency"
-        class="w-full rounded-md border-gray-300">
+      <select wire:model.live="selected_currency" class="w-full rounded-md border-gray-300">
+        <option value="">Seleccione una moneda</option>
         <option value="NIO">Córdobas (NIO)</option>
         <option value="USD">Dólares (USD)</option>
       </select>
     </div>
     <div>
       <x-input-label for="exchange_rate" value="Tipo de Cambio (1 USD = X NIO)" />
-      @if ($selected_currency === 'NIO' && !$exchange_rate)
-        <p class="text-red-500">El tipo de cambio es obligatorio cuando la moneda es Córdobas.</p>
+      @if ($selected_currency === 'USD')
+        <!-- Campo deshabilitado si la moneda es USD -->
+        <x-text-input type="number" value="1" disabled class="w-full bg-gray-100" />
+      @else
+        <!-- Si la moneda es NIO, habilitamos el campo de tipo de cambio -->
+        <x-text-input wire:model.live="exchange_rate" type="number" step="0.01" class="w-full"
+          placeholder="Tipo de Cambio" />
       @endif
-      <x-text-input
-        wire:model.live="exchange_rate"
-        type="number"
-        step="0.01"
-        class="w-full"
-        x-bind:disabled="selectedCurrency === 'USD'"
-        x-bind:class="{
-            'opacity-50 bg-gray-100 cursor-not-allowed': selectedCurrency === 'USD',
-            'bg-white': selectedCurrency !== 'USD'
-        }"
-        required />
     </div>
   </div>
 
+
   <!-- Productos -->
   <div class="mb-6">
-    <x-input-label for="product_search" value="Agregar Productos" />
-    <x-text-input
-      wire:model.live="product_search"
-      type="text"
-      class="w-full"
-      placeholder="Buscar por nombre o código"
-      x-bind:disabled="selectedCurrency === 'NIO' && !exchange_rate"
-      x-bind:class="{
-          'opacity-50 bg-gray-100 cursor-not-allowed': selectedCurrency === 'NIO' && !exchange_rate,
-          'bg-white': !(selectedCurrency === 'NIO' && !exchange_rate)
-      }" />
+    <!-- Productos -->
+    <div class="mb-6">
+      <x-input-label for="product_search" value="Agregar Productos" />
+      <x-text-input wire:model.live="product_search" type="text" class="w-full"
+        placeholder="Buscar por nombre o código" />
 
-    @if ($product_search)
-      <div class="mt-2 rounded-lg bg-white shadow">
-        @foreach ($products ?? [] as $product)
-          <div class="cursor-pointer p-2 hover:bg-gray-100"
-            wire:click="addProduct({{ $product->id }})">
-            {{ $product->name }} - {{ $product->code }}
-            ({{ $product->currency }} {{ number_format($product->unit_price, 2) }})
-          </div>
-        @endforeach
-      </div>
-    @endif
+      @if ($product_search)
+        <div class="mt-2 rounded-lg bg-white shadow">
+          @foreach ($products ?? [] as $product)
+            <div class="cursor-pointer p-2 hover:bg-gray-100" wire:click="addProduct({{ $product->id }})">
+              {{ $product->name }} - {{ $product->code }} ({{ $product->currency }}
+              {{ number_format($product->unit_price, 2) }})
+            </div>
+          @endforeach
+        </div>
+      @endif
+    </div>
 
+    <!-- Lista de productos seleccionados -->
     <!-- Lista de productos seleccionados -->
     @if (count($selected_products))
       <table class="mt-4 w-full">
@@ -115,65 +99,33 @@
         </thead>
         <tbody>
           @foreach ($selected_products as $id => $product)
-            <tr>
+            <tr wire:key="product-{{ $id }}">
               <td class="p-2">
                 {{ $product->name }}
                 @if ($product->currency !== $selected_currency)
-                  <span class="text-sm text-gray-500">
-                    (Original: {{ $product->currency }} {{ number_format($original_prices[$id], 2) }})
-                  </span>
+                  <span class="text-sm text-gray-500"> (Original: {{ $product->currency }}
+                    {{ number_format($original_prices[$id], 2) }}) </span>
                 @endif
               </td>
               <td class="p-2">
-                <input
-                  type="number"
-                  wire:model.live="quantities.{{ $id }}"
+                <input type="number" wire:model.live="quantities.{{ $id }}"
                   wire:change="updateQuantity({{ $id }}, $event.target.value)"
-                  class="w-20 rounded-md border-gray-300"
-                  min="1" />
+                  class="w-20 rounded-md border-gray-300" min="1" />
               </td>
               <td class="p-2">{{ number_format($prices[$id], 2) }}</td>
               <td class="p-2">{{ number_format($quantities[$id] * $prices[$id], 2) }}</td>
               <td class="p-2">
                 <button wire:click="removeProduct({{ $id }})"
-                  class="text-red-600 hover:text-red-800">
-                  Eliminar
-                </button>
+                  class="text-red-600 hover:text-red-800">Eliminar</button>
               </td>
             </tr>
           @endforeach
         </tbody>
       </table>
-
-      <!-- Impuesto Global -->
-      <div class="mt-4">
-        <div class="flex items-center">
-          <input type="checkbox" wire:model.live="use_global_tax" class="mr-2">
-          <x-input-label value="Usar impuesto global" />
-        </div>
-        @if ($use_global_tax)
-          <div class="mt-2">
-            <x-input-label for="global_tax_rate" value="Tasa de impuesto (%)" />
-            <x-text-input
-              wire:model.live="global_tax_rate"
-              type="number"
-              step="0.01"
-              class="w-full" />
-          </div>
-        @endif
-      </div>
-
-      <!-- Totales -->
-      <div class="mt-4 text-right">
-        <p>Subtotal: {{ $selected_currency }} {{ number_format($subtotal, 2) }}</p>
-        <p>IVA {{ $use_global_tax ? "($global_tax_rate%)" : '' }}:
-          {{ $selected_currency }} {{ number_format($tax, 2) }}</p>
-        <p class="text-lg font-bold">
-          Total: {{ $selected_currency }} {{ number_format($total, 2) }}
-        </p>
-      </div>
     @endif
   </div>
+
+
 
   <!-- Estado y Tipo de Pago -->
   <div class="mb-6 grid grid-cols-2 gap-4">
@@ -211,10 +163,7 @@
   <!-- Notas -->
   <div class="mb-6">
     <x-input-label for="notes" value="Notas" />
-    <textarea
-      wire:model="notes"
-      class="w-full rounded-md border-gray-300"
-      rows="3"></textarea>
+    <textarea wire:model="notes" class="w-full rounded-md border-gray-300" rows="3"></textarea>
   </div>
 
   <!-- Mensajes de Error -->
@@ -230,9 +179,7 @@
 
   <!-- Botón de Guardar -->
   <div class="flex justify-end">
-    <button
-      wire:click="save"
-      class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
+    <button wire:click="save" class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
       Guardar Factura
     </button>
   </div>
