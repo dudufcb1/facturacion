@@ -12,7 +12,7 @@ use App\Http\Controllers\CategoryController;
 Route::get('/', function () {
   return view('welcome');
 });
-
+/*Rutas*/
 Route::middleware(['auth', 'verified'])->group(function () {
   Route::get('/dashboard', function () {
     return view('dashboard');
