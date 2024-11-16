@@ -146,8 +146,8 @@
                                     <div class="flex space-x-2">
                                         <a href="{{ route('invoices.show', $invoice) }}"
                                            class="text-blue-600 hover:text-blue-900">Ver</a>
-                                        <a href="{{ route('invoices.edit', $invoice) }}"
-                                           class="text-indigo-600 hover:text-indigo-900">Editar</a>
+                                        {{--<a href="{{ route('invoices.edit', $invoice) }}"
+                                           class="text-indigo-600 hover:text-indigo-900">Editar</a>--}}
                                         {{--<form action="{{ route('invoices.destroy', $invoice) }}" method="POST"
                                               class="inline"
                                               onsubmit="return confirm('¿Estás seguro de querer eliminar esta factura?')">
@@ -274,13 +274,13 @@
                                        class="text-blue-600 hover:text-blue-900">Ver</a>
                                     {{-- <a href="{{ route('invoices.edit', $invoice) }}"
                                       class="text-indigo-600 hover:text-indigo-900">Editar</a> --}}
-                                    <form action="{{ route('invoices.destroy', $invoice) }}" method="POST"
+                                    {{--<form action="{{ route('invoices.destroy', $invoice) }}" method="POST"
                                           class="inline"
                                           onsubmit="return confirm('¿Estás seguro de querer eliminar esta factura?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900">Eliminar</button>
-                                    </form>
+                                    </form>--}}
                                     @if ($invoice->payment_status !== 'paid')
                                         <a href="{{ route('payments.create', ['invoice' => $invoice->id]) }}"
                                            class="text-indigo-600 hover:text-indigo-900">
