@@ -73,6 +73,7 @@
                             <option value="">Emitidas</option>
                             <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pendientes</option>
                             <option value="paid" {{ $status === 'paid' ? 'selected' : '' }}>Pagadas</option>
+                            <option value="cancelled" {{ $status === 'cancelled' ? 'selected' : '' }}>Anuladas</option>
                         </select>
                     </div>
 
@@ -224,6 +225,9 @@
                                 @elseif ($invoice->status === 'paid')
                                     <span
                                             class="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800">Pagada</span>
+                                @elseif ($invoice->status === 'cancelled')
+                                    <span
+                                            class="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">ANULADA</span>
                                 @else
                                     <span
                                             class="inline-flex rounded-full bg-yellow-100 px-2 text-xs font-semibold leading-5 text-yellow-800">Pendiente</span>

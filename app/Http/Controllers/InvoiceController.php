@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class InvoiceController extends Controller
@@ -125,5 +127,79 @@ class InvoiceController extends Controller
             return 'data:image/'.$type.';base64,'.base64_encode($imageData);
         }
         return null;
+    }
+
+    /**
+     * Anular una factura
+     */
+    public function void(Request $request, Invoice $invoice)
+    {
+        try {
+            // Validar la razón de anulación
+            $request->validate([
+                'void_reason' => 'required|string|min:10|max:500'
+            ], [
+                'void_reason.required' => 'La razón de anulación es obligatoria.',
+                'void_reason.min' => 'La razón debe tener al menos 10 caracteres.',
+                'void_reason.max' => 'La razón no puede exceder 500 caracteres.'
+            ]);
+
+            // Verificar que la factura puede ser anulada
+            if (!$invoice->canBeVoided()) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'error' => 'Esta factura no puede ser anulada. Solo se pueden anular facturas emitidas o pendientes.'
+                    ], 422);
+                }
+                return redirect()->back()->with('error', 'Esta factura no puede ser anulada. Solo se pueden anular facturas emitidas o pendientes.');
+            }
+
+            // Verificar si tiene pagos asociados
+            $hasPayments = $invoice->payments()->where('status', 'completed')->exists();
+
+            // Anular la factura
+            $invoice->voidInvoice($request->void_reason, Auth::id());
+
+            // Enviar notificaciones a administradores
+            $this->notifyAdministrators($invoice, Auth::user(), $request->void_reason);
+
+            $message = $hasPayments
+                ? 'Factura anulada exitosamente. Los pagos asociados también fueron anulados.'
+                : 'Factura anulada exitosamente.';
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'had_payments' => $hasPayments
+                ]);
+            }
+
+            return redirect()->route('invoices.show', $invoice)->with('success', $message);
+
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Error al anular la factura: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()->with('error', 'Error al anular la factura: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notificar a administradores sobre la anulación
+     */
+    private function notifyAdministrators(Invoice $invoice, $voidedBy, string $reason)
+    {
+        // Obtener todos los administradores
+        $administrators = User::whereIn('role', ['administrador', 'propietario'])
+            ->where('id', '!=', $voidedBy->id) // Excluir al usuario que anuló
+            ->get();
+
+        // Enviar notificación a cada administrador
+        foreach ($administrators as $admin) {
+            $admin->notify(new \App\Notifications\VoidInvoiceNotification($invoice, $voidedBy, $reason));
+        }
     }
 }

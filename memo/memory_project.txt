@@ -1,0 +1,65 @@
+# Memoria del Proyecto - Sistema de Facturación
+
+## Información General del Proyecto
+- **Tipo**: Sistema de facturación desarrollado en Laravel 11
+- **Base de datos**: SQLite (database/database.sqlite)
+- **Framework**: Laravel 11.9 con Livewire 3.5
+- **Lenguaje**: PHP 8.2+
+
+## Características Principales
+- Sistema de facturación completo
+- Gestión de empresas, clientes, productos y categorías
+- Generación de PDFs con DomPDF
+- Códigos QR integrados
+- Soporte multi-moneda (NIO/USD)
+- Sistema de pagos y créditos
+- Roles de usuario
+
+## Estructura de Base de Datos
+### Tablas Principales:
+- **companies**: Datos de empresas/talleres con información legal (RUC), facturación
+- **clients**: Gestión de clientes
+- **products**: Catálogo de productos con categorías
+- **categories**: Categorización de productos
+- **invoices**: Facturas con estados (issued, debt, paid, cancelled)
+- **invoice_products**: Detalle de productos por factura
+- **payments**: Registro de pagos
+- **users**: Usuarios con roles
+
+## Dependencias Clave
+- barryvdh/laravel-dompdf: Generación de PDFs
+- simplesoftwareio/simple-qrcode: Códigos QR
+- livewire/livewire: Componentes reactivos
+- laravel/breeze: Autenticación
+
+## Configuración de Desarrollo
+- Usa SQLite como base de datos por defecto
+- Configurado para desarrollo con Vite
+- Testing con Pest PHP
+- Localización en español e inglés
+
+## Notas de Desarrollo
+- Proyecto orientado a talleres/empresas de servicios
+- Manejo de series de facturación
+- Control de numeración automática
+- Soft deletes implementado
+- Timestamps en todas las tablas principales
+
+## Configuración Actual
+- Base de datos SQLite con ruta absoluta configurada
+- Archivo .env inicializado correctamente
+- Todas las migraciones ejecutadas
+- Sistema funcional con datos de prueba
+- Assets de frontend compilados con Vite
+- Manifest de Vite generado correctamente
+- Dependencias de Node.js instaladas (169 paquetes)
+
+## Warnings Resueltos
+- ✅ Deprecation warnings en voku/portable-ascii RESUELTOS
+- Actualizado voku/portable-ascii de 2.0.1 a 2.0.3
+- Sistema completamente limpio sin warnings de deprecación
+- Todos los comandos Artisan funcionan sin warnings
+[2025-07-11 16:24:34] 🎯 MILESTONE: Scan inicial del proyecto completado: Sistema de facturación Laravel 11 con SQLite, Livewire, DomPDF y QR codes. Base de datos configurada con migraciones ejecutadas. Archivo .env inicializado correctamente.
+[2025-07-11 16:30:02] 🎯 MILESTONE: Assets de frontend compilados exitosamente: Instaladas dependencias Node.js, generado manifest de Vite, compilados CSS/JS con Tailwind y Alpine.js. Sistema completamente funcional sin errores de manifest.
+[2025-07-11 16:32:57] 🐛 BUG SOLVED: Warnings de deprecación completamente eliminados: Actualizado voku/portable-ascii de 2.0.1 a 2.0.3. Sistema ahora funciona sin ningún warning de deprecación en PHP 8.2. Todos los comandos Artisan ejecutan limpiamente.
+[2025-07-11 17:09:20] 🎯 MILESTONE: Sistema de anulación de facturas implementado completamente: Middleware de autorización, métodos de anulación transaccionales, notificaciones a administradores, interfaz con modales y filtros, usuario administrador creado. Funcionalidad lista para testing.

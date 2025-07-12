@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Invoice extends Model
 {
@@ -26,12 +27,16 @@ class Invoice extends Model
         'currency',
         'exchange_rate',
         'reference_number',
-        'issued_at'
+        'issued_at',
+        'voided_at',
+        'voided_by',
+        'void_reason'
     ];
 
     protected $casts = [
         'due_date' => 'date',
         'issued_at' => 'datetime',
+        'voided_at' => 'datetime',
         'subtotal' => 'decimal:2',
         'tax' => 'decimal:2',
         'total' => 'decimal:2',
@@ -135,5 +140,65 @@ class Invoice extends Model
             return 'partial';
         }
         return 'unpaid';
+    }
+
+    /**
+     * Relación con el usuario que anuló la factura
+     */
+    public function voidedBy()
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * Verificar si la factura está anulada
+     */
+    public function isVoided(): bool
+    {
+        return $this->status === 'cancelled' && !is_null($this->voided_at);
+    }
+
+    /**
+     * Verificar si la factura puede ser anulada
+     * Permite anular facturas emitidas, pendientes Y PAGADAS (para casos especiales)
+     */
+    public function canBeVoided(): bool
+    {
+        return in_array($this->status, ['issued', 'debt', 'paid']) && is_null($this->voided_at);
+    }
+
+    /**
+     * Anular la factura
+     */
+    public function voidInvoice(string $reason, int $userId): bool
+    {
+        // Verificar que la factura puede ser anulada
+        if (!$this->canBeVoided()) {
+            throw new \Exception('Esta factura no puede ser anulada. Solo se pueden anular facturas emitidas o pendientes.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Anular todos los pagos asociados
+            foreach ($this->payments()->where('status', 'completed')->get() as $payment) {
+                $payment->voidPayment($reason, $userId);
+            }
+
+            // Actualizar la factura
+            $this->update([
+                'status' => 'cancelled',
+                'voided_at' => now(),
+                'voided_by' => $userId,
+                'void_reason' => $reason
+            ]);
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

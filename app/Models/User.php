@@ -36,8 +36,37 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function void($string): void
+    /**
+     * Verificar si el usuario puede anular facturas
+     * Solo administradores y propietarios pueden anular facturas
+     */
+    public function canVoidInvoices(): bool
     {
+        return in_array($this->role, ['administrador', 'propietario']);
+    }
+
+    /**
+     * Verificar si el usuario es administrador
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'administrador';
+    }
+
+    /**
+     * Verificar si el usuario es propietario
+     */
+    public function isOwner(): bool
+    {
+        return $this->role === 'propietario';
+    }
+
+    /**
+     * Verificar si el usuario es operador (roles sin permisos de anulación)
+     */
+    public function isOperator(): bool
+    {
+        return in_array($this->role, ['cajero', 'contralor', 'contador']);
     }
 
     /**

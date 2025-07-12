@@ -34,6 +34,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
   // Helper routes
   Route::get('/products/{product}/qr', [ProductController::class, 'generateQR'])->name('products.qr');
   Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'generatePDF'])->name('invoices.pdf');
+
+  // Rutas de anulación con middleware de autorización
+  Route::patch('invoices/{invoice}/void', [InvoiceController::class, 'void'])
+    ->name('invoices.void')
+    ->middleware('can.void.invoices');
 });
 
 require __DIR__ . '/auth.php';

@@ -201,6 +201,145 @@
         </svg>
         Imprimir
       </button>
+
+      {{-- Botón de Anulación - Solo visible para administradores y propietarios --}}
+      @if(auth()->user()->canVoidInvoices() && $invoice->canBeVoided())
+        <button onclick="openVoidModal()"
+          class="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-2 text-red-600 transition-colors hover:bg-red-100">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Anular Factura
+        </button>
+      @endif
+
+      {{-- Mostrar estado anulada si aplica --}}
+      @if($invoice->isVoided())
+        <div class="flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2 text-red-800">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <span class="font-bold">FACTURA ANULADA</span>
+        </div>
+      @endif
     </div>
   </div>
+
+  {{-- Modal de Anulación --}}
+  @if(auth()->user()->canVoidInvoices() && $invoice->canBeVoided())
+    <div id="voidModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
+      <div class="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div class="mb-4 flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Anular Factura</h3>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-sm text-gray-600 mb-3">
+            ⚠️ <strong>Operación Delicada:</strong> Esta acción anulará permanentemente la factura.
+          </p>
+
+          @if($invoice->payments()->where('status', 'completed')->exists())
+            <div class="mb-3 rounded-lg bg-yellow-50 p-3 border border-yellow-200">
+              <p class="text-sm text-yellow-800">
+                <strong>⚠️ Atención:</strong> Esta factura tiene pagos asociados que también serán anulados.
+              </p>
+            </div>
+          @endif
+
+          <label for="voidReason" class="block text-sm font-medium text-gray-700 mb-2">
+            Razón de anulación (obligatorio):
+          </label>
+          <textarea id="voidReason" rows="3"
+            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            placeholder="Explique detalladamente la razón de la anulación..."></textarea>
+          <p class="mt-1 text-xs text-gray-500">Mínimo 10 caracteres, máximo 500.</p>
+        </div>
+
+        <div class="flex gap-3">
+          <button onclick="closeVoidModal()"
+            class="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Cancelar
+          </button>
+          <button onclick="confirmVoid()"
+            class="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+            Anular Factura
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function openVoidModal() {
+        document.getElementById('voidModal').classList.remove('hidden');
+        document.getElementById('voidModal').classList.add('flex');
+        document.getElementById('voidReason').focus();
+      }
+
+      function closeVoidModal() {
+        document.getElementById('voidModal').classList.add('hidden');
+        document.getElementById('voidModal').classList.remove('flex');
+        document.getElementById('voidReason').value = '';
+      }
+
+      function confirmVoid() {
+        const reason = document.getElementById('voidReason').value.trim();
+
+        if (reason.length < 10) {
+          alert('La razón de anulación debe tener al menos 10 caracteres.');
+          return;
+        }
+
+        if (reason.length > 500) {
+          alert('La razón de anulación no puede exceder 500 caracteres.');
+          return;
+        }
+
+        // Confirmar la acción
+        if (!confirm('¿Está seguro de que desea anular esta factura? Esta acción no se puede deshacer.')) {
+          return;
+        }
+
+        // Enviar solicitud AJAX
+        fetch('{{ route("invoices.void", $invoice) }}', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            void_reason: reason
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message);
+            location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'No se pudo anular la factura'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error de conexión. Por favor, intente nuevamente.');
+        });
+      }
+
+      // Cerrar modal con ESC
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeVoidModal();
+        }
+      });
+    </script>
+  @endif
 </x-app-layout>

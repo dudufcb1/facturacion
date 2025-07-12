@@ -17,6 +17,7 @@ class Payment extends Model
   ];
   protected $casts = [
     'payment_date' => 'datetime',
+    'voided_at' => 'datetime',
   ];
 
   // Enum para PaymentMethod
@@ -53,7 +54,10 @@ class Payment extends Model
     'status',
     'payment_date',
     'bank_name',
-    'bank_account'
+    'bank_account',
+    'voided_at',
+    'voided_by',
+    'void_reason'
   ];
 
   protected static function boot()
@@ -112,5 +116,75 @@ class Payment extends Model
   public function getStatusSpanishAttribute()
   {
     return self::STATUS_TRANSLATIONS[$this->status] ?? $this->status;
+  }
+
+  /**
+   * Relación con el usuario que anuló el pago
+   */
+  public function voidedBy()
+  {
+    return $this->belongsTo(User::class, 'voided_by');
+  }
+
+  /**
+   * Verificar si el pago está anulado
+   */
+  public function isVoided(): bool
+  {
+    return $this->status === 'cancelled' && !is_null($this->voided_at);
+  }
+
+  /**
+   * Verificar si el pago puede ser anulado
+   */
+  public function canBeVoided(): bool
+  {
+    return $this->status === 'completed' && is_null($this->voided_at);
+  }
+
+  /**
+   * Anular el pago
+   */
+  public function voidPayment(string $reason, int $userId): bool
+  {
+    // Verificar que el pago puede ser anulado
+    if (!$this->canBeVoided()) {
+      throw new \Exception('Este pago no puede ser anulado. Solo se pueden anular pagos completados.');
+    }
+
+    // Actualizar el pago
+    $this->update([
+      'status' => 'cancelled',
+      'voided_at' => now(),
+      'voided_by' => $userId,
+      'void_reason' => $reason
+    ]);
+
+    // Recalcular el estado de la factura
+    $this->recalculateInvoiceStatus();
+
+    return true;
+  }
+
+  /**
+   * Recalcular el estado de la factura después de anular un pago
+   */
+  private function recalculateInvoiceStatus(): void
+  {
+    $invoice = $this->invoice;
+    $totalPaidConverted = $invoice->payments()
+      ->where('status', 'completed')
+      ->sum('converted_amount');
+
+    // Si no hay pagos completados, cambiar estado a debt
+    if ($totalPaidConverted == 0) {
+      $invoice->status = 'debt';
+    } elseif ($totalPaidConverted >= $invoice->total) {
+      $invoice->status = 'paid';
+    } else {
+      $invoice->status = 'debt'; // Pago parcial se considera como deuda
+    }
+
+    $invoice->save();
   }
 }
